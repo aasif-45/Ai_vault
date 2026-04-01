@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background:
+                radial-gradient(circle at 50% 26%, rgba(99, 102, 241, 0.18), transparent 22%),
+                radial-gradient(circle at 72% 24%, rgba(236, 72, 153, 0.12), transparent 18%),
+                radial-gradient(circle at 18% 78%, rgba(56, 189, 248, 0.08), transparent 20%),
+                linear-gradient(135deg, #0f172a 0%, #172033 50%, #0f172a 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+        
+        .glow-btn {
+            box-shadow: 0 18px 40px rgba(79, 70, 229, 0.35);
+        }
+        
+        .glow-btn:hover {
+            box-shadow: 0 24px 54px rgba(99, 102, 241, 0.45);
+        }
+
+        .hero-shell {
+            position: relative;
+        }
+
+        .hero-shell::before {
+            content: '';
+            position: absolute;
+            inset: -24px;
+            background:
+                radial-gradient(circle at center, rgba(99, 102, 241, 0.12), transparent 45%),
+                radial-gradient(circle at top, rgba(244, 114, 182, 0.08), transparent 35%);
+            filter: blur(22px);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.14));
+            border: 1px solid rgba(129, 140, 248, 0.24);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .hero-icon-wrap {
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.2), rgba(30, 41, 59, 0.24));
+            border: 1px solid rgba(129, 140, 248, 0.18);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.35);
+        }
+        
+        .search-glow:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Drag and Drop Styles */
+        .draggable {
+            cursor: grab;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .drag-over {
+            border: 2px dashed #6366f1 !important;
+            background: rgba(99, 102, 241, 0.1) !important;
+        }
+
+        .drop-indicator {
+            position: relative;
+        }
+
+        .drop-indicator::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #6366f1;
+            border-radius: 2px;
+            animation: pulse 1s infinite;
+        }
+
+        .drop-indicator-top::before {
+            top: -6px;
+        }
+
+        .drop-indicator-bottom::before {
+            bottom: -6px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .drag-handle {
+            cursor: grab;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .category-drop-zone {
+            transition: all 0.2s ease;
+            min-height: 100px;
+        }
+
+        .category-drop-zone.drag-over-category {
+            background: rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2"></div>
+
+    <!-- Home Page -->
+    <div id="homePage" class="gradient-bg min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
+        <div class="hero-shell text-center fade-in max-w-5xl mx-auto">
+            <div class="mb-8 inline-flex items-center justify-center w-28 h-28 rounded-[2rem] hero-icon-wrap">
+                <i class="fas fa-robot text-6xl text-indigo-300 block"></i>
+            </div>
+            <div class="mb-5">
+                <span class="hero-badge font-bold  inline-flex items-center rounded-full px-5 py-2 text-xs md:text-sm font-semibold tracking-[0.35em] uppercase text-indigo-200">
+                    AI Vault
+                </span>
+            </div>
+            <h1 class="text-2xl md:text-4xl font-bold mb-6 leading-[0.95] bg-gradient-to-r from-indigo-300 via-violet-300 to-pink-400 bg-clip-text text-transparent">
+                Your Command Center for AI Tools.
+            </h1>
+            <p class="text-slate-200 md:text-2xl mb-12 max-w-xl mx-auto leading-relaxed">
+                Manage, discover, and access all your AI tools in one beautiful dashboard.
+            </p>
+            <button onclick="showDashboard()" class="glow-btn bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-4 px-10 rounded-full text-lg transition-all duration-300 transform hover:scale-105">
+                Go to Dashboard <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+        <div class="absolute bottom-8 text-slate-600 text-sm">
+            <i class="fas fa-lock mr-2"></i> Data stored locally in your browser
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboardView" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="bg-slate-800/80 backdrop-blur-lg border-b border-slate-700 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <i class="fas fa-robot text-2xl text-indigo-400"></i>
+                        <h1 class="text-2xl font-bold">AI Vault</h1>
+                        <button onclick="showHome()" class="text-slate-400 hover:text-white text-sm transition-colors">
+                            <i class="fas fa-home mr-1"></i> Home
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 lg:ml-auto">
+                        <button onclick="openAddToolModal()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Tool
+                        </button>
+                        <button onclick="openCategoryModal()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                            <i class="fas fa-folder"></i> Categories
+                        </button>
+                        <div class="relative w-full sm:w-56">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input
+                                type="text"
+                                id="searchInput"
+                                placeholder="Search tools..."
+                                class="search-glow w-full bg-slate-900 border border-slate-700 rounded-lg py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                                oninput="filterTools()"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="bg-slate-800/50 border-b border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-tools text-indigo-400"></i>
+                    <span class="text-slate-400">Total Tools:</span>
+                    <span id="totalTools" class="font-semibold text-white">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-folder-open text-purple-400"></i>
+                    <span class="text-slate-400">Categories:</span>
+                    <span id="totalCategories" class="font-semibold text-white">0</span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-500">
+                    <i class="fas fa-grip-vertical"></i>
+                    <span>Drag to reorder</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Grid by Category -->
+        <main id="toolsContainer" class="max-w-7xl mx-auto px-4 pt-6 pb-12">
+            <!-- Tools will be rendered here -->
+        </main>
+    </div>
+
+    <!-- Add/Edit Tool Modal -->
+    <div id="toolModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl fade-in border border-slate-700">
+            <div class="p-6 border-b border-slate-700">
+                <h2 id="toolModalTitle" class="text-xl font-bold">Add New Tool</h2>
+            </div>
+            <form id="toolForm" class="p-6 space-y-4">
+                <input type="hidden" id="toolId">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">URL *</label>
+                    <input 
+                        type="url" 
+                        id="toolUrl" 
+                        required 
+                        placeholder="https://chat.openai.com"
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                        oninput="scheduleToolDetection()"
+                        onblur="detectToolFromUrl(true)"
+                    >
+                    <p id="urlHint" class="text-xs text-slate-500 mt-1 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Tool Name *</label>
+                    <input 
+                        type="text" 
+                        id="toolName" 
+                        placeholder="Auto-filled from the link"
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Category *</label>
+                    <input
+                        type="text"
+                        id="toolCategory"
+                        list="categorySuggestions"
+                        required
+                        placeholder="Detected automatically, but you can edit it"
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                        oninput="handleCategoryInput()"
+                    >
+                    <datalist id="categorySuggestions"></datalist>
+                    <p id="categoryHint" class="text-xs text-indigo-400 mt-1 hidden"></p>
+                    <p id="categoryReason" class="text-xs text-slate-500 mt-1 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                    <textarea 
+                        id="toolDescription" 
+                        rows="3"
+                        placeholder="Brief description of the tool..."
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                        oninput="handleDescriptionInput()"
+                    ></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeToolModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-3 rounded-lg font-medium transition-colors">
+                        Save Tool
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Management Modal -->
+    <div id="categoryModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl fade-in border border-slate-700 max-h-[80vh] flex flex-col">
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-xl font-bold">Manage Categories</h2>
+                <p class="text-slate-400 text-sm mt-1"><i class="fas fa-grip-vertical mr-1"></i> Drag to reorder</p>
+            </div>
+            <div class="p-6 flex-1 overflow-y-auto">
+                <div class="flex gap-2 mb-4">
+                    <input 
+                        type="text" 
+                        id="newCategoryInput" 
+                        placeholder="New category name..."
+                        class="flex-1 bg-slate-900 border border-slate-600 rounded-lg py-2 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    >
+                    <button onclick="addCategory()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <ul id="categoryList" class="space-y-2">
+                    <!-- Categories will be populated here -->
+                </ul>
+            </div>
+            <div class="p-6 border-t border-slate-700">
+                <button onclick="closeCategoryModal()" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-medium transition-colors">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Category Modal -->
+    <div id="renameModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl fade-in border border-slate-700">
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-xl font-bold">Rename Category</h2>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="renameCategoryId">
+                <input 
+                    type="text" 
+                    id="renameCategoryInput" 
+                    placeholder="New name..."
+                    class="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                >
+                <div class="flex gap-3 mt-4">
+                    <button onclick="closeRenameModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="saveRenamedCategory()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-3 rounded-lg font-medium transition-colors">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Preview Modal -->
+    <div id="importModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl fade-in border border-slate-700 max-h-[80vh] flex flex-col">
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-xl font-bold">Import Data</h2>
+            </div>
+            <div class="p-6 flex-1 overflow-y-auto">
+                <div id="importPreview" class="space-y-4">
+                    <!-- Preview will be rendered here -->
+                </div>
+                <div class="mt-6 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                    <p class="text-sm text-slate-400 mb-3">Import mode:</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="importMode" value="merge" checked class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm"><strong class="text-white">Merge</strong> - Add new tools, skip duplicates</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="importMode" value="replace" class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm"><strong class="text-white">Replace</strong> - Overwrite all existing data</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-700 flex gap-3">
+                <button onclick="closeImportModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-medium transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmImport()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-check mr-2"></i> Import
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA ====================
+        const DEFAULT_CATEGORIES = [
+            'thinking', 'coding', 'writing', 'images', 'video', 
+            'audio', 'ppt', 'research', 'productivity', 'meeting', 'other'
+        ];
+
+        const DEFAULT_TOOLS = [
+            { id: 1, name: 'ChatGPT', url: 'https://chat.openai.com', category: 'thinking', description: 'Advanced AI assistant for conversations, analysis, and creative tasks.', order: 0 },
+            { id: 2, name: 'DeepSeek', url: 'https://chat.deepseek.com', category: 'thinking', description: 'Powerful reasoning AI with strong coding and math capabilities.', order: 1 },
+            { id: 3, name: 'Claude', url: 'https://claude.ai', category: 'thinking', description: 'Anthropic\'s helpful, harmless, and honest AI assistant.', order: 2 },
+            { id: 4, name: 'GitHub Copilot', url: 'https://github.com/features/copilot', category: 'coding', description: 'AI pair programmer that suggests code in your editor.', order: 0 },
+            { id: 5, name: 'Replit', url: 'https://replit.com', category: 'coding', description: 'Browser-based IDE with AI coding assistance.', order: 1 },
+            { id: 6, name: 'Gamma', url: 'https://gamma.app', category: 'ppt', description: 'AI-powered presentations and documents creator.', order: 0 },
+            { id: 7, name: 'Midjourney', url: 'https://midjourney.com', category: 'images', description: 'Generate stunning AI artwork from text descriptions.', order: 0 },
+            { id: 8, name: 'DALL-E', url: 'https://openai.com/dall-e-3', category: 'images', description: 'OpenAI\'s image generation model with high accuracy.', order: 1 },
+            { id: 9, name: 'Runway', url: 'https://runwayml.com', category: 'video', description: 'AI-powered video editing and generation platform.', order: 0 },
+            { id: 10, name: 'Otter.ai', url: 'https://otter.ai', category: 'meeting', description: 'AI meeting transcription and note-taking assistant.', order: 0 },
+            { id: 11, name: 'Jasper', url: 'https://jasper.ai', category: 'writing', description: 'AI content platform for marketing and copywriting.', order: 0 },
+            { id: 12, name: 'Notion AI', url: 'https://notion.so', category: 'productivity', description: 'AI-enhanced workspace for notes, docs, and projects.', order: 0 },
+        ];
+
+        // Known tool mappings for auto-detection
+        const TOOL_MAPPINGS = {
+            'chat.openai.com': { name: 'ChatGPT', category: 'thinking', description: 'Advanced AI assistant for conversations, analysis, and creative tasks.' },
+            'openai.com': { name: 'OpenAI', category: 'thinking', description: 'AI platform for chat, coding, multimodal tools, and developer APIs.' },
+            'claude.ai': { name: 'Claude', category: 'thinking', description: 'Anthropic\'s AI assistant for writing, reasoning, and document work.' },
+            'anthropic.com': { name: 'Anthropic', category: 'thinking', description: 'Anthropic\'s AI platform focused on helpful, safe assistants and APIs.' },
+            'chat.deepseek.com': { name: 'DeepSeek', category: 'thinking', description: 'Reasoning-focused AI assistant with strong coding and math support.' },
+            'deepseek.com': { name: 'DeepSeek', category: 'thinking', description: 'Reasoning-focused AI platform for chat, coding, and technical problem-solving.' },
+            'gemini.google.com': { name: 'Gemini', category: 'thinking', description: 'Google\'s AI assistant for chat, search, and productivity tasks.' },
+            'bard.google.com': { name: 'Gemini', category: 'thinking', description: 'Google\'s AI assistant for chat, search, and productivity tasks.' },
+            'perplexity.ai': { name: 'Perplexity', category: 'research', description: 'AI answer engine for web research with cited results.' },
+            'you.com': { name: 'You.com', category: 'research', description: 'AI search and research assistant for finding answers across the web.' },
+            'github.com/features/copilot': { name: 'GitHub Copilot', category: 'coding', description: 'AI coding assistant for generating, explaining, and refactoring code.' },
+            'github.com/copilot': { name: 'GitHub Copilot', category: 'coding', description: 'AI coding assistant for generating, explaining, and refactoring code.' },
+            'copilot.github.com': { name: 'GitHub Copilot', category: 'coding', description: 'AI coding assistant for generating, explaining, and refactoring code.' },
+            'replit.com': { name: 'Replit', category: 'coding', description: 'Browser-based coding workspace with AI-assisted development tools.' },
+            'cursor.com': { name: 'Cursor', category: 'coding', description: 'AI-native code editor built for fast coding and codebase navigation.' },
+            'cursor.sh': { name: 'Cursor', category: 'coding', description: 'AI-native code editor built for fast coding and codebase navigation.' },
+            'codeium.com': { name: 'Codeium', category: 'coding', description: 'AI coding assistant for autocomplete, chat, and code explanations.' },
+            'tabnine.com': { name: 'Tabnine', category: 'coding', description: 'AI developer assistant focused on code completion and team productivity.' },
+            'v0.dev': { name: 'v0 by Vercel', category: 'coding', description: 'Generates UI and frontend code from prompts for modern web apps.' },
+            'bolt.new': { name: 'Bolt', category: 'coding', description: 'AI web and app builder for generating, editing, and shipping full-stack projects from prompts.' },
+            'varient.com': { name: 'Varient', category: 'coding', description: 'AI web design and app builder for creating modern websites and product experiences.' },
+            'draftly.space': { name: 'Draftly', category: 'coding', description: 'AI 3D website builder and visual studio for creating cinematic web experiences from prompts.' },
+            'gamma.app': { name: 'Gamma', category: 'ppt', description: 'AI presentation maker for decks, docs, and visual storytelling.' },
+            'beautiful.ai': { name: 'Beautiful.ai', category: 'ppt', description: 'Presentation design tool with AI-assisted slide layouts.' },
+            'tome.app': { name: 'Tome', category: 'ppt', description: 'AI-powered storytelling tool for presentations and narrative decks.' },
+            'pitch.com': { name: 'Pitch', category: 'ppt', description: 'Presentation platform for creating polished team decks and pitches.' },
+            'slidesai.io': { name: 'SlidesAI', category: 'ppt', description: 'Turns text into slide decks with AI-generated presentation structure.' },
+            'midjourney.com': { name: 'Midjourney', category: 'images', description: 'AI image generator for concept art, illustrations, and visual exploration.' },
+            'leonardo.ai': { name: 'Leonardo.ai', category: 'images', description: 'AI image creation platform for artwork, assets, and design concepts.' },
+            'stability.ai': { name: 'Stable Diffusion', category: 'images', description: 'Generative image platform for creating and editing visuals with AI.' },
+            'ideogram.ai': { name: 'Ideogram', category: 'images', description: 'AI image generator known for text-forward graphics and design concepts.' },
+            'playground.com': { name: 'Playground', category: 'images', description: 'AI image tool for generating marketing visuals, art, and edits.' },
+            'canva.com': { name: 'Canva', category: 'images', description: 'Design platform with AI tools for graphics, presentations, and content creation.' },
+            'adobe.com/firefly': { name: 'Adobe Firefly', category: 'images', description: 'Adobe\'s generative AI tool for image creation and creative edits.' },
+            'firefly.adobe.com': { name: 'Adobe Firefly', category: 'images', description: 'Adobe\'s generative AI tool for image creation and creative edits.' },
+            'runwayml.com': { name: 'Runway', category: 'video', description: 'AI video creation and editing platform for visual storytelling.' },
+            'runway.ml': { name: 'Runway', category: 'video', description: 'AI video creation and editing platform for visual storytelling.' },
+            'pika.art': { name: 'Pika', category: 'video', description: 'AI video generator for stylized motion clips and creative scenes.' },
+            'synthesia.io': { name: 'Synthesia', category: 'video', description: 'AI video platform for avatar-led explainers, training, and presentations.' },
+            'heygen.com': { name: 'HeyGen', category: 'video', description: 'AI video generator for avatar videos, localization, and marketing content.' },
+            'descript.com': { name: 'Descript', category: 'video', description: 'AI-powered video and podcast editor with transcript-based editing.' },
+            'kapwing.com': { name: 'Kapwing', category: 'video', description: 'Online editor with AI tools for video, subtitles, and short-form content.' },
+            'invideo.io': { name: 'InVideo', category: 'video', description: 'AI video maker for marketing, social content, and explainers.' },
+            'otter.ai': { name: 'Otter.ai', category: 'meeting', description: 'AI meeting assistant for transcription, summaries, and notes.' },
+            'fireflies.ai': { name: 'Fireflies.ai', category: 'meeting', description: 'AI notetaker for meetings with transcripts, summaries, and action items.' },
+            'krisp.ai': { name: 'Krisp', category: 'meeting', description: 'AI meeting tool for noise cancellation, transcription, and call clarity.' },
+            'tldv.io': { name: 'tl;dv', category: 'meeting', description: 'Meeting recorder and AI summarizer for calls, notes, and follow-ups.' },
+            'fathom.video': { name: 'Fathom', category: 'meeting', description: 'AI meeting assistant that records calls and generates summaries.' },
+            'jasper.ai': { name: 'Jasper', category: 'writing', description: 'AI writing assistant for marketing copy, campaigns, and brand content.' },
+            'copy.ai': { name: 'Copy.ai', category: 'writing', description: 'AI writing tool for sales, marketing, and content workflows.' },
+            'writesonic.com': { name: 'Writesonic', category: 'writing', description: 'AI content platform for articles, ads, landing pages, and copy.' },
+            'rytr.me': { name: 'Rytr', category: 'writing', description: 'AI writing assistant for quick content drafts and copy generation.' },
+            'grammarly.com': { name: 'Grammarly', category: 'writing', description: 'Writing assistant for grammar, clarity, tone, and communication quality.' },
+            'quillbot.com': { name: 'QuillBot', category: 'writing', description: 'AI paraphrasing and writing improvement tool for rewriting text.' },
+            'wordtune.com': { name: 'Wordtune', category: 'writing', description: 'AI writing assistant for rephrasing, rewriting, and improving clarity.' },
+            'notion.so': { name: 'Notion AI', category: 'productivity', description: 'Workspace assistant for notes, tasks, docs, and AI-powered writing.' },
+            'notion.ai': { name: 'Notion AI', category: 'productivity', description: 'Workspace assistant for notes, tasks, docs, and AI-powered writing.' },
+            'clickup.com': { name: 'ClickUp AI', category: 'productivity', description: 'Project management platform with AI support for planning and execution.' },
+            'mem.ai': { name: 'Mem', category: 'productivity', description: 'AI-powered notes and knowledge workspace for organizing information.' },
+            'taskade.com': { name: 'Taskade', category: 'productivity', description: 'Collaborative productivity app with AI agents, tasks, and workflows.' },
+            'elevenlabs.io': { name: 'ElevenLabs', category: 'audio', description: 'AI voice platform for text-to-speech, dubbing, and audio generation.' },
+            'murf.ai': { name: 'Murf', category: 'audio', description: 'AI voice generator for narration, voiceovers, and spoken content.' },
+            'play.ht': { name: 'PlayHT', category: 'audio', description: 'AI voice synthesis tool for realistic speech and narration.' },
+            'suno.ai': { name: 'Suno', category: 'audio', description: 'AI music generator for songs, vocals, and audio experiments.' },
+            'suno.com': { name: 'Suno', category: 'audio', description: 'AI music generator for songs, vocals, and audio experiments.' },
+            'udio.com': { name: 'Udio', category: 'audio', description: 'AI music creation platform for generating tracks and vocals.' },
+            'speechify.com': { name: 'Speechify', category: 'audio', description: 'Text-to-speech platform for reading, narration, and audio listening.' },
+            'consensus.app': { name: 'Consensus', category: 'research', description: 'Research assistant that finds evidence-backed answers from scientific papers.' },
+            'elicit.org': { name: 'Elicit', category: 'research', description: 'AI research assistant for literature review and paper analysis.' },
+            'scholarai.io': { name: 'ScholarAI', category: 'research', description: 'AI research tool for exploring papers, sources, and academic findings.' },
+            'scite.ai': { name: 'scite', category: 'research', description: 'Research platform for citation context, evidence, and paper discovery.' },
+        };
+
+        // Category detection from keywords
+        const CATEGORY_KEYWORDS = {
+            coding: [
+                'code', 'coding', 'developer', 'development', 'devtool', 'github', 'git', 'programming', 'ide',
+                'compiler', 'debug', 'builder', 'build', 'app', 'web', 'website', 'site', 'frontend', 'backend',
+                'fullstack', 'landing page', 'landing pages', 'ui', 'ux', 'prototype', 'wireframe', 'ship',
+                'deploy', 'no-code', 'low-code', 'generate websites', 'web design', 'website builder', 'app builder'
+            ],
+            thinking: ['chat', 'gpt', 'ai assistant', 'assistant', 'llm', 'reason', 'agent', 'conversation'],
+            writing: ['write', 'writer', 'copy', 'content', 'grammar', 'text', 'blog', 'article', 'essay', 'draft', 'rewrite'],
+            images: ['image', 'art', 'draw', 'paint', 'design', 'photo', 'graphic', 'visual', 'illustration', 'mockup'],
+            video: ['video', 'film', 'movie', 'edit', 'clip', 'animate', 'animation', 'avatar'],
+            audio: ['audio', 'voice', 'music', 'sound', 'speech', 'podcast', 'tts', 'voiceover'],
+            ppt: ['slide', 'slides', 'presentation', 'deck', 'pitch', 'ppt', 'powerpoint'],
+            meeting: ['meet', 'meeting', 'zoom', 'call', 'transcri', 'transcript', 'note taker', 'record', 'summary'],
+            research: ['research', 'paper', 'academic', 'scholar', 'science', 'search', 'citations', 'evidence', 'literature'],
+            productivity: ['notion', 'task', 'project', 'workflow', 'automat', 'organize', 'workspace', 'notes', 'planning'],
+        };
+
+        const CATEGORY_PRIORITY = ['coding', 'writing', 'images', 'video', 'audio', 'ppt', 'meeting', 'research', 'productivity', 'thinking'];
+
+        const CATEGORY_DESCRIPTION_TEMPLATES = {
+            coding: 'AI coding assistant for generating, debugging, and improving software faster.',
+            thinking: 'AI assistant for conversation, reasoning, and general problem-solving.',
+            writing: 'AI writing tool for drafting, rewriting, and improving text content.',
+            images: 'AI creative tool for generating, editing, and designing visual content.',
+            video: 'AI video tool for generating, editing, or enhancing visual stories.',
+            audio: 'AI audio tool for voice, music, speech, and sound generation.',
+            ppt: 'AI presentation tool for creating slides, decks, and visual pitches.',
+            meeting: 'AI meeting assistant for notes, transcripts, summaries, and follow-ups.',
+            research: 'AI research tool for search, sources, papers, and evidence gathering.',
+            productivity: 'AI productivity tool for organizing work, tasks, notes, and workflows.',
+            other: 'AI-powered tool for specialized workflows and everyday tasks.'
+        };
+
+        // ==================== STATE ====================
+        let tools = [];
+        let categories = [];
+        let pendingImportData = null;
+        let draggedToolId = null;
+        let draggedCategory = null;
+        let dragSourceCategory = null;
+        let detectToolTimeout = null;
+        const metadataCache = new Map();
+        let categoryManuallyEdited = false;
+        let lastAutoDetectedCategory = '';
+        let descriptionManuallyEdited = false;
+        let lastAutoDescription = '';
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            loadData();
+            renderTools();
+            updateStats();
+        }
+
+        function loadData() {
+            const savedTools = localStorage.getItem('aiToolManager_tools');
+            const savedCategories = localStorage.getItem('aiToolManager_categories');
+            
+            if (savedTools && savedCategories) {
+                tools = JSON.parse(savedTools);
+                categories = JSON.parse(savedCategories);
+                // Ensure all tools have an order property
+                tools.forEach((tool, index) => {
+                    if (tool.order === undefined) tool.order = index;
+                });
+            } else {
+                resetDemo();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('aiToolManager_tools', JSON.stringify(tools));
+            localStorage.setItem('aiToolManager_categories', JSON.stringify(categories));
+        }
+
+        function resetDemo() {
+            tools = JSON.parse(JSON.stringify(DEFAULT_TOOLS));
+            categories = [...DEFAULT_CATEGORIES];
+            saveData();
+            renderTools();
+            updateStats();
+            renderCategoryList();
+            showToast('Data reset to demo defaults', 'info');
+        }
+
+        // ==================== TOAST NOTIFICATIONS ====================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-emerald-600',
+                error: 'bg-red-600',
+                info: 'bg-indigo-600',
+                warning: 'bg-amber-600'
+            };
+
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                warning: 'fa-exclamation-triangle'
+            };
+
+            toast.className = `toast ${colors[type]} px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-white min-w-[280px]`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]}"></i>
+                <span class="flex-1">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // ==================== DRAG AND DROP - TOOLS ====================
+        function handleToolDragStart(e, toolId, category) {
+            draggedToolId = toolId;
+            dragSourceCategory = category;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', toolId);
+        }
+
+        function handleToolDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedToolId = null;
+            dragSourceCategory = null;
+            // Remove all drop indicators
+            document.querySelectorAll('.drop-indicator-top, .drop-indicator-bottom, .drag-over').forEach(el => {
+                el.classList.remove('drop-indicator-top', 'drop-indicator-bottom', 'drag-over');
+            });
+            document.querySelectorAll('.drag-over-category').forEach(el => {
+                el.classList.remove('drag-over-category');
+            });
+        }
+
+        function handleToolDragOver(e, targetToolId) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (draggedToolId === null || draggedToolId === targetToolId) return;
+
+            const targetElement = e.target.closest('[data-tool-id]');
+            if (!targetElement) return;
+
+            // Remove previous indicators
+            document.querySelectorAll('.drop-indicator-top, .drop-indicator-bottom').forEach(el => {
+                el.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+            });
+
+            // Determine if we're in top or bottom half
+            const rect = targetElement.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            
+            if (e.clientY < midY) {
+                targetElement.classList.add('drop-indicator-top');
+                targetElement.classList.remove('drop-indicator-bottom');
+            } else {
+                targetElement.classList.add('drop-indicator-bottom');
+                targetElement.classList.remove('drop-indicator-top');
+            }
+        }
+
+        function handleToolDrop(e, targetToolId, targetCategory) {
+            e.preventDefault();
+            
+            if (draggedToolId === null || draggedToolId === targetToolId) return;
+
+            const targetElement = e.target.closest('[data-tool-id]');
+            const insertBefore = targetElement?.classList.contains('drop-indicator-top');
+
+            // Get tools in the target category sorted by order
+            const categoryTools = tools
+                .filter(t => t.category === targetCategory)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            // Find the dragged tool
+            const draggedTool = tools.find(t => t.id === draggedToolId);
+            if (!draggedTool) return;
+
+            // Update category if moving between categories
+            const wasInDifferentCategory = draggedTool.category !== targetCategory;
+            draggedTool.category = targetCategory;
+
+            // Calculate new order
+            const targetTool = tools.find(t => t.id === targetToolId);
+            const targetOrder = targetTool ? (targetTool.order || 0) : 0;
+
+            // Reorder tools in the target category
+            const newCategoryTools = tools
+                .filter(t => t.category === targetCategory && t.id !== draggedToolId)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            // Find insertion index
+            let insertIndex = newCategoryTools.findIndex(t => t.id === targetToolId);
+            if (!insertBefore) insertIndex++;
+            if (insertIndex === -1) insertIndex = newCategoryTools.length;
+
+            // Insert dragged tool
+            newCategoryTools.splice(insertIndex, 0, draggedTool);
+
+            // Update order for all tools in category
+            newCategoryTools.forEach((tool, index) => {
+                tool.order = index;
+            });
+
+            saveData();
+            renderTools();
+
+            if (wasInDifferentCategory) {
+                showToast(`Moved to ${targetCategory}`, 'success');
+            }
+        }
+
+        function handleCategoryDragOver(e, category) {
+            e.preventDefault();
+            if (draggedToolId === null) return;
+            
+            const dropZone = e.target.closest('.category-drop-zone');
+            if (dropZone) {
+                dropZone.classList.add('drag-over-category');
+            }
+        }
+
+        function handleCategoryDragLeave(e) {
+            const dropZone = e.target.closest('.category-drop-zone');
+            if (dropZone && !dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('drag-over-category');
+            }
+        }
+
+        function handleCategoryDrop(e, category) {
+            e.preventDefault();
+            
+            if (draggedToolId === null) return;
+
+            const draggedTool = tools.find(t => t.id === draggedToolId);
+            if (!draggedTool || draggedTool.category === category) return;
+
+            // Move tool to end of new category
+            draggedTool.category = category;
+            const categoryTools = tools.filter(t => t.category === category);
+            draggedTool.order = categoryTools.length;
+
+            saveData();
+            renderTools();
+            showToast(`Moved to ${category}`, 'success');
+        }
+
+        // ==================== DRAG AND DROP - CATEGORIES ====================
+        function handleCategoryDragStart(e, category) {
+            if (category === 'other') {
+                e.preventDefault();
+                return;
+            }
+            draggedCategory = category;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', category);
+        }
+
+        function handleCategoryDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedCategory = null;
+            document.querySelectorAll('.drop-indicator-top, .drop-indicator-bottom').forEach(el => {
+                el.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+            });
+        }
+
+        function handleCategoryDragOver(e, targetCategory) {
+            e.preventDefault();
+            if (draggedCategory === null || draggedCategory === targetCategory) return;
+
+            const targetElement = e.target.closest('[data-category]');
+            if (!targetElement) return;
+
+            document.querySelectorAll('#categoryList .drop-indicator-top, #categoryList .drop-indicator-bottom').forEach(el => {
+                el.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+            });
+
+            const rect = targetElement.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            
+            if (e.clientY < midY) {
+                targetElement.classList.add('drop-indicator-top');
+            } else {
+                targetElement.classList.add('drop-indicator-bottom');
+            }
+        }
+
+        function handleCategoryDrop(e, targetCategory) {
+            e.preventDefault();
+            
+            if (draggedCategory === null || draggedCategory === targetCategory) return;
+
+            const targetElement = e.target.closest('[data-category]');
+            const insertBefore = targetElement?.classList.contains('drop-indicator-top');
+
+            // Get current indices
+            const draggedIndex = categories.indexOf(draggedCategory);
+            const targetIndex = categories.indexOf(targetCategory);
+
+            if (draggedIndex === -1 || targetIndex === -1) return;
+
+            // Remove dragged category
+            categories.splice(draggedIndex, 1);
+
+            // Calculate new index
+            let newIndex = categories.indexOf(targetCategory);
+            if (!insertBefore) newIndex++;
+            if (newIndex === -1) newIndex = categories.length;
+
+            // Insert at new position
+            categories.splice(newIndex, 0, draggedCategory);
+
+            saveData();
+            renderCategoryList();
+            renderTools();
+            showToast('Categories reordered', 'success');
+        }
+
+        // ==================== EXPORT / IMPORT ====================
+        function exportData() {
+            const exportObj = {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                tools: tools,
+                categories: categories
+            };
+
+            const dataStr = JSON.stringify(exportObj, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-tools-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast(`Exported ${tools.length} tools successfully!`, 'success');
+        }
+
+        function triggerImport() {
+            document.getElementById('importInput').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (!data.tools || !Array.isArray(data.tools)) {
+                        throw new Error('Invalid file: missing tools array');
+                    }
+                    if (!data.categories || !Array.isArray(data.categories)) {
+                        throw new Error('Invalid file: missing categories array');
+                    }
+
+                    pendingImportData = data;
+                    showImportPreview(data);
+                    
+                } catch (err) {
+                    showToast(`Import failed: ${err.message}`, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function showImportPreview(data) {
+            const preview = document.getElementById('importPreview');
+            
+            const existingToolUrls = new Set(tools.map(t => t.url));
+            const newTools = data.tools.filter(t => !existingToolUrls.has(t.url));
+            const duplicateTools = data.tools.filter(t => existingToolUrls.has(t.url));
+            
+            const existingCategories = new Set(categories);
+            const newCategories = data.categories.filter(c => !existingCategories.has(c));
+
+            preview.innerHTML = `
+                <div class="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                    <h3 class="font-semibold text-white mb-3">File Summary</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Total tools in file:</span>
+                            <span class="text-white font-medium">${data.tools.length}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Categories in file:</span>
+                            <span class="text-white font-medium">${data.categories.length}</span>
+                        </div>
+                        ${data.exportedAt ? `
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Exported on:</span>
+                            <span class="text-white font-medium">${new Date(data.exportedAt).toLocaleDateString()}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="bg-emerald-900/30 rounded-lg p-4 border border-emerald-700/50">
+                    <h3 class="font-semibold text-emerald-400 mb-2">
+                        <i class="fas fa-plus-circle mr-2"></i>New items to add (merge mode)
+                    </h3>
+                    <div class="space-y-1 text-sm">
+                        <p class="text-slate-300">${newTools.length} new tools</p>
+                        <p class="text-slate-300">${newCategories.length} new categories</p>
+                    </div>
+                </div>
+
+                ${duplicateTools.length > 0 ? `
+                <div class="bg-amber-900/30 rounded-lg p-4 border border-amber-700/50">
+                    <h3 class="font-semibold text-amber-400 mb-2">
+                        <i class="fas fa-copy mr-2"></i>Duplicates (will be skipped in merge)
+                    </h3>
+                    <p class="text-sm text-slate-300">${duplicateTools.length} tools already exist</p>
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('importModal').classList.remove('hidden');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+            pendingImportData = null;
+        }
+
+        function confirmImport() {
+            if (!pendingImportData) return;
+
+            const mode = document.querySelector('input[name="importMode"]:checked').value;
+
+            if (mode === 'replace') {
+                tools = pendingImportData.tools;
+                categories = pendingImportData.categories;
+                
+                if (!categories.includes('other')) {
+                    categories.push('other');
+                }
+                
+                showToast(`Replaced with ${tools.length} tools`, 'success');
+            } else {
+                const existingToolUrls = new Set(tools.map(t => t.url));
+                const maxId = Math.max(0, ...tools.map(t => t.id));
+                
+                let addedCount = 0;
+                pendingImportData.tools.forEach((tool, index) => {
+                    if (!existingToolUrls.has(tool.url)) {
+                        tools.push({
+                            ...tool,
+                            id: maxId + addedCount + 1
+                        });
+                        addedCount++;
+                    }
+                });
+
+                const existingCategories = new Set(categories);
+                pendingImportData.categories.forEach(cat => {
+                    if (!existingCategories.has(cat)) {
+                        categories.push(cat);
+                    }
+                });
+
+                showToast(`Added ${addedCount} new tools`, 'success');
+            }
+
+            saveData();
+            renderTools();
+            updateStats();
+            closeImportModal();
+        }
+
+        // ==================== VIEW SWITCHING ====================
+        function showDashboard() {
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('dashboardView').classList.add('fade-in');
+        }
+
+        function showHome() {
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('homePage').classList.remove('hidden');
+        }
+
+        // ==================== RENDERING ====================
+        function renderTools() {
+            const container = document.getElementById('toolsContainer');
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            
+            const filteredTools = tools.filter(tool => {
+                const domain = extractDomain(tool.url);
+                const searchFields = [
+                    tool.name.toLowerCase(),
+                    (tool.description || '').toLowerCase(),
+                    tool.category.toLowerCase(),
+                    tool.url.toLowerCase(),
+                    domain.toLowerCase()
+                ].join(' ');
+                return searchFields.includes(searchTerm);
+            });
+
+            const groupedTools = {};
+            filteredTools.forEach(tool => {
+                if (!groupedTools[tool.category]) {
+                    groupedTools[tool.category] = [];
+                }
+                groupedTools[tool.category].push(tool);
+            });
+
+            // Sort tools within each category by order
+            Object.keys(groupedTools).forEach(category => {
+                groupedTools[category].sort((a, b) => (a.order || 0) - (b.order || 0));
+            });
+
+            const sortedCategories = categories.filter(cat => groupedTools[cat]);
+
+            if (sortedCategories.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-20 text-slate-500">
+                        <i class="fas fa-search text-4xl mb-4 block"></i>
+                        <p class="text-lg">No tools found matching "${searchTerm}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sortedCategories.map(category => `
+                <div class="mb-8 fade-in category-drop-zone" 
+                     data-category-zone="${category}"
+                     ondragover="handleCategoryDragOver(event, '${category}')"
+                     ondragleave="handleCategoryDragLeave(event)"
+                     ondrop="handleCategoryDrop(event, '${category}')">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="bg-indigo-600/20 text-indigo-400 px-3 py-1 rounded-full text-sm font-medium capitalize">
+                            ${getCategoryIcon(category)} ${category}
+                        </span>
+                        <span class="text-slate-500 text-sm">${groupedTools[category].length} tools</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        ${groupedTools[category].map(tool => renderToolCard(tool, category)).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderToolCard(tool, category) {
+            const domain = extractDomain(tool.url);
+            return `
+                <div class="card-hover bg-slate-800 border border-slate-700 rounded-xl p-5 relative group draggable"
+                     draggable="true"
+                     data-tool-id="${tool.id}"
+                     ondragstart="handleToolDragStart(event, ${tool.id}, '${category}')"
+                     ondragend="handleToolDragEnd(event)"
+                     ondragover="handleToolDragOver(event, ${tool.id})"
+                     ondrop="handleToolDrop(event, ${tool.id}, '${category}')">
+                    <div class="absolute top-3 left-3 drag-handle opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-opacity">
+                        <i class="fas fa-grip-vertical text-slate-400"></i>
+                    </div>
+                    <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                        <button onclick="openEditToolModal(${tool.id})" class="text-slate-400 hover:text-indigo-400 transition-colors">
+                            <i class="fas fa-pen text-sm"></i>
+                        </button>
+                        <button onclick="deleteTool(${tool.id})" class="text-slate-400 hover:text-red-400 transition-colors">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-start gap-3 mb-3 pl-4">
+                        <div class="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" class="w-6 h-6" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-cube text-slate-400\\'></i>'">
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-semibold text-white truncate">${tool.name}</h3>
+                            <p class="text-slate-500 text-sm truncate">${domain}</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-sm mb-4 line-clamp-2 h-10 pl-4">${tool.description || 'No description available.'}</p>
+                    <a href="${tool.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors pl-4">
+                        Visit <i class="fas fa-external-link-alt text-xs"></i>
+                    </a>
+                </div>
+            `;
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'thinking': '<i class="fas fa-brain"></i>',
+                'coding': '<i class="fas fa-code"></i>',
+                'writing': '<i class="fas fa-pen-nib"></i>',
+                'images': '<i class="fas fa-image"></i>',
+                'video': '<i class="fas fa-video"></i>',
+                'audio': '<i class="fas fa-microphone"></i>',
+                'ppt': '<i class="fas fa-presentation"></i>',
+                'meeting': '<i class="fas fa-users"></i>',
+                'research': '<i class="fas fa-flask"></i>',
+                'productivity': '<i class="fas fa-rocket"></i>',
+                'other': '<i class="fas fa-folder"></i>',
+            };
+            return icons[category] || '<i class="fas fa-folder"></i>';
+        }
+
+        function updateStats() {
+            document.getElementById('totalTools').textContent = tools.length;
+            document.getElementById('totalCategories').textContent = categories.length;
+        }
+
+        function filterTools() {
+            renderTools();
+        }
+
+        // ==================== TOOL MODAL ====================
+        function openAddToolModal() {
+            document.getElementById('toolModalTitle').textContent = 'Add New Tool';
+            document.getElementById('toolForm').reset();
+            document.getElementById('toolId').value = '';
+            document.getElementById('urlHint').classList.add('hidden');
+            document.getElementById('categoryHint').classList.add('hidden');
+            document.getElementById('categoryReason').classList.add('hidden');
+            categoryManuallyEdited = false;
+            lastAutoDetectedCategory = '';
+            descriptionManuallyEdited = false;
+            lastAutoDescription = '';
+            populateCategoryDropdown();
+            document.getElementById('toolModal').classList.remove('hidden');
+        }
+
+        function openEditToolModal(id) {
+            const tool = tools.find(t => t.id === id);
+            if (!tool) return;
+
+            document.getElementById('toolModalTitle').textContent = 'Edit Tool';
+            document.getElementById('toolId').value = tool.id;
+            document.getElementById('toolUrl').value = tool.url;
+            document.getElementById('toolName').value = tool.name;
+            document.getElementById('toolDescription').value = tool.description || '';
+            document.getElementById('urlHint').classList.add('hidden');
+            document.getElementById('categoryHint').classList.add('hidden');
+            document.getElementById('categoryReason').classList.add('hidden');
+            categoryManuallyEdited = false;
+            lastAutoDetectedCategory = tool.category || '';
+            descriptionManuallyEdited = false;
+            lastAutoDescription = tool.description || '';
+            populateCategoryDropdown(tool.category);
+            document.getElementById('toolModal').classList.remove('hidden');
+        }
+
+        function closeToolModal() {
+            document.getElementById('toolModal').classList.add('hidden');
+        }
+
+        function populateCategoryDropdown(selected = '') {
+            const input = document.getElementById('toolCategory');
+            const datalist = document.getElementById('categorySuggestions');
+            datalist.innerHTML = categories.map(cat => `
+                <option value="${cat.charAt(0).toUpperCase() + cat.slice(1)}"></option>
+            `).join('');
+            input.value = selected ? selected.charAt(0).toUpperCase() + selected.slice(1) : '';
+        }
+
+        function handleCategoryInput() {
+            const categoryInput = document.getElementById('toolCategory');
+            const categoryHint = document.getElementById('categoryHint');
+            const categoryReason = document.getElementById('categoryReason');
+            const normalizedValue = categoryInput.value.trim().toLowerCase();
+            categoryManuallyEdited = normalizedValue !== '' && normalizedValue !== lastAutoDetectedCategory;
+
+            if (categoryManuallyEdited) {
+                categoryHint.textContent = `Custom category: ${categoryInput.value.trim()}`;
+                categoryHint.classList.remove('hidden');
+                categoryReason.classList.add('hidden');
+            } else if (normalizedValue === lastAutoDetectedCategory && normalizedValue) {
+                categoryHint.textContent = `Category auto-selected: ${lastAutoDetectedCategory}`;
+                categoryHint.classList.remove('hidden');
+            } else if (!normalizedValue) {
+                categoryHint.classList.add('hidden');
+                categoryReason.classList.add('hidden');
+            }
+        }
+
+        function handleDescriptionInput() {
+            const descriptionInput = document.getElementById('toolDescription');
+            const normalizedValue = descriptionInput.value.trim();
+            descriptionManuallyEdited = normalizedValue !== '' && normalizedValue !== lastAutoDescription;
+        }
+
+        function ensureCategoryExists(category) {
+            if (!category || categories.includes(category)) return;
+
+            const otherIndex = categories.indexOf('other');
+            if (otherIndex !== -1) {
+                categories.splice(otherIndex, 0, category);
+            } else {
+                categories.push(category);
+            }
+
+            saveData();
+        }
+
+        function formatToolName(rawName) {
+            return rawName
+                .split(/[\s\-_.]+/)
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
+
+        function suggestToolNameFromDomain(domain) {
+            if (!domain) return '';
+
+            const cleanDomain = domain.replace(/^www\./, '');
+            const primary = cleanDomain.split('.')[0] || cleanDomain;
+            return formatToolName(primary);
+        }
+
+        function normalizeUrl(url) {
+            const trimmedUrl = (url || '').trim();
+            if (!trimmedUrl) return '';
+            if (/^https?:\/\//i.test(trimmedUrl)) return trimmedUrl;
+            return `https://${trimmedUrl}`;
+        }
+
+        function findToolMatch(domain, fullPath) {
+            for (const [key, value] of Object.entries(TOOL_MAPPINGS)) {
+                if (fullPath.includes(key) || domain === key) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        function buildDetectedToolData(url, existingName = '', existingDescription = '', remoteMetadata = null) {
+            const normalizedUrl = normalizeUrl(url);
+            const domain = extractDomain(normalizedUrl);
+            const fullPath = extractFullPath(normalizedUrl);
+            const match = findToolMatch(domain, fullPath);
+            const metadataText = [
+                remoteMetadata?.title || '',
+                remoteMetadata?.description || '',
+                remoteMetadata?.publisher || '',
+                fullPath
+            ].join(' ');
+            const categoryAnalysis = match?.category
+                ? { category: match.category, reasons: ['known tool mapping'] }
+                : detectCategoryFromKeywords(metadataText);
+            const fallbackAnalysis = categoryAnalysis.category === 'other'
+                ? detectCategoryFromKeywords(fullPath)
+                : categoryAnalysis;
+            const finalAnalysis = fallbackAnalysis.category === 'other' && match?.category
+                ? { category: match.category, reasons: ['known tool mapping'] }
+                : fallbackAnalysis;
+            const category = finalAnalysis.category || 'other';
+            const name = existingName || match?.name || remoteMetadata?.title || suggestToolNameFromDomain(domain);
+            const description = existingDescription || generateToolDescription(name, category, domain, match?.description || '', remoteMetadata);
+
+            return {
+                match,
+                domain,
+                fullPath,
+                normalizedUrl,
+                remoteMetadata,
+                name,
+                category,
+                categoryReasons: finalAnalysis.reasons || [],
+                description
+            };
+        }
+
+        function scheduleToolDetection() {
+            clearTimeout(detectToolTimeout);
+            detectToolTimeout = setTimeout(() => {
+                detectToolFromUrl();
+            }, 500);
+        }
+
+        async function fetchUrlMetadata(url) {
+            if (!url) return null;
+            if (metadataCache.has(url)) {
+                return metadataCache.get(url);
+            }
+
+            try {
+                const response = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=false&meta=false`);
+                if (!response.ok) {
+                    throw new Error(`Metadata request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (!result?.status || !result?.data) {
+                    return null;
+                }
+
+                const metadata = {
+                    title: result.data.title || '',
+                    description: result.data.description || '',
+                    publisher: result.data.publisher || ''
+                };
+
+                metadataCache.set(url, metadata);
+                return metadata;
+            } catch {
+                metadataCache.set(url, null);
+                return null;
+            }
+        }
+
+        function cleanDescriptionText(text, name = '') {
+            if (!text) return '';
+
+            let cleaned = text
+                .replace(/\s+/g, ' ')
+                .replace(/\s+[|:-]\s+.*$/, '')
+                .trim();
+
+            if (name) {
+                const lowerName = name.toLowerCase();
+                const lowerCleaned = cleaned.toLowerCase();
+                if (lowerCleaned === lowerName) {
+                    return '';
+                }
+            }
+
+            return cleaned;
+        }
+
+        function generateToolDescription(name, category, domain, mappedDescription = '', remoteMetadata = null) {
+            if (mappedDescription) return mappedDescription;
+
+            const metadataDescription = cleanDescriptionText(remoteMetadata?.description || '', name);
+            if (metadataDescription) return metadataDescription;
+
+            const metadataTitle = cleanDescriptionText(remoteMetadata?.title || '', name);
+            if (metadataTitle && metadataTitle.toLowerCase() !== name.toLowerCase()) {
+                return `${name} is ${metadataTitle.charAt(0).toLowerCase() + metadataTitle.slice(1)}.`;
+            }
+
+            const template = CATEGORY_DESCRIPTION_TEMPLATES[category] || CATEGORY_DESCRIPTION_TEMPLATES.other;
+            if (!name) return template;
+
+            if (domain) {
+                return `${name} is available at ${domain} and works as an ${template.charAt(0).toLowerCase() + template.slice(1)}`;
+            }
+
+            return `${name} is an ${template.charAt(0).toLowerCase() + template.slice(1)}`;
+        }
+
+        document.getElementById('toolForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            await detectToolFromUrl(true);
+
+            const id = document.getElementById('toolId').value;
+            const url = normalizeUrl(document.getElementById('toolUrl').value.trim());
+            const detectedTool = buildDetectedToolData(
+                url,
+                document.getElementById('toolName').value.trim(),
+                descriptionManuallyEdited ? document.getElementById('toolDescription').value.trim() : ''
+            );
+
+            const rawCategoryInput = document.getElementById('toolCategory').value.trim();
+            const category = (rawCategoryInput || detectedTool.category).trim().toLowerCase();
+            ensureCategoryExists(category);
+            populateCategoryDropdown(category);
+            const toolData = {
+                name: detectedTool.name,
+                url: url,
+                category: category,
+                description: detectedTool.description,
+            };
+
+            if (id) {
+                const index = tools.findIndex(t => t.id === parseInt(id));
+                if (index !== -1) {
+                    tools[index] = { ...tools[index], ...toolData };
+                    showToast('Tool updated successfully', 'success');
+                }
+            } else {
+                const newId = Math.max(0, ...tools.map(t => t.id)) + 1;
+                const categoryTools = tools.filter(t => t.category === category);
+                const maxOrder = categoryTools.length > 0 ? Math.max(...categoryTools.map(t => t.order || 0)) + 1 : 0;
+                tools.push({ id: newId, ...toolData, order: maxOrder });
+                showToast('Tool added successfully', 'success');
+            }
+
+            saveData();
+            renderTools();
+            updateStats();
+            closeToolModal();
+        });
+
+        // ==================== URL DETECTION ====================
+        async function detectToolFromUrl(forceRemote = false) {
+            const urlInput = document.getElementById('toolUrl');
+            const nameInput = document.getElementById('toolName');
+            const categorySelect = document.getElementById('toolCategory');
+            const descriptionInput = document.getElementById('toolDescription');
+            const urlHint = document.getElementById('urlHint');
+            const categoryHint = document.getElementById('categoryHint');
+            const categoryReason = document.getElementById('categoryReason');
+            
+            const url = urlInput.value.trim();
+            if (!url) return;
+            const normalizedUrl = normalizeUrl(url);
+            if (url !== normalizedUrl) {
+                urlInput.value = normalizedUrl;
+            }
+
+            const domain = extractDomain(normalizedUrl);
+            const fullPath = extractFullPath(normalizedUrl);
+            let remoteMetadata = null;
+            const localMatch = findToolMatch(domain, fullPath);
+            const localCategory = localMatch?.category || detectCategoryFromKeywords(fullPath);
+
+            if (forceRemote || !localMatch || localCategory === 'other') {
+                remoteMetadata = await fetchUrlMetadata(normalizedUrl);
+            }
+
+            const detectedTool = buildDetectedToolData(
+                normalizedUrl,
+                nameInput.value.trim(),
+                descriptionManuallyEdited ? descriptionInput.value.trim() : '',
+                remoteMetadata
+            );
+
+            if (!nameInput.value.trim()) {
+                nameInput.value = detectedTool.name;
+            }
+
+            ensureCategoryExists(detectedTool.category);
+            lastAutoDetectedCategory = detectedTool.category;
+
+            if (!categoryManuallyEdited || !categorySelect.value.trim()) {
+                populateCategoryDropdown(detectedTool.category);
+                categorySelect.value = detectedTool.category.charAt(0).toUpperCase() + detectedTool.category.slice(1);
+            }
+
+            categoryHint.textContent = categoryManuallyEdited
+                ? `Auto-detected: ${detectedTool.category} (custom category kept)`
+                : `Category auto-selected: ${detectedTool.category}`;
+            categoryHint.classList.remove('hidden');
+            if (detectedTool.categoryReasons?.length) {
+                categoryReason.textContent = `Detected from: ${detectedTool.categoryReasons.join(', ')}`;
+                categoryReason.classList.remove('hidden');
+            } else {
+                categoryReason.classList.add('hidden');
+            }
+
+            if (!descriptionManuallyEdited || !descriptionInput.value.trim()) {
+                descriptionInput.value = detectedTool.description;
+                lastAutoDescription = detectedTool.description;
+            }
+
+            if (detectedTool.remoteMetadata?.description) {
+                urlHint.textContent = `Fetched details from the website for ${detectedTool.name}`;
+            } else if (detectedTool.match?.name) {
+                urlHint.textContent = `Detected: ${detectedTool.match.name}`;
+            } else {
+                urlHint.textContent = `Detected from link: ${detectedTool.name}`;
+            }
+            urlHint.classList.remove('hidden');
+        }
+
+        function extractDomain(url) {
+            try {
+                const urlObj = new URL(url);
+                return urlObj.hostname.replace('www.', '');
+            } catch {
+                return url.replace(/https?:\/\//, '').replace('www.', '').split('/')[0];
+            }
+        }
+
+        function extractFullPath(url) {
+            try {
+                const urlObj = new URL(url);
+                return (urlObj.hostname + urlObj.pathname).replace('www.', '').toLowerCase();
+            } catch {
+                return url.replace(/https?:\/\//, '').replace('www.', '').toLowerCase();
+            }
+        }
+
+        function scoreCategoryText(text, keywords) {
+            const lowerText = ` ${text.toLowerCase()} `;
+            let score = 0;
+            const matchedKeywords = [];
+
+            for (const keyword of keywords) {
+                const lowerKeyword = keyword.toLowerCase();
+                if (lowerKeyword.includes(' ')) {
+                    if (lowerText.includes(lowerKeyword)) {
+                        score += 4;
+                        matchedKeywords.push(keyword);
+                    }
+                    continue;
+                }
+
+                const boundaryPattern = new RegExp(`(^|[^a-z])${lowerKeyword}([^a-z]|$)`, 'g');
+                const matches = lowerText.match(boundaryPattern);
+                if (matches) {
+                    score += matches.length * 2;
+                    matchedKeywords.push(keyword);
+                } else if (lowerText.includes(lowerKeyword)) {
+                    score += 1;
+                    matchedKeywords.push(keyword);
+                }
+            }
+
+            return {
+                score,
+                matchedKeywords: [...new Set(matchedKeywords)]
+            };
+        }
+
+        function detectCategoryFromKeywords(text) {
+            if (!text) {
+                return { category: 'other', reasons: [] };
+            }
+
+            const scores = {};
+            Object.entries(CATEGORY_KEYWORDS).forEach(([category, keywords]) => {
+                scores[category] = scoreCategoryText(text, keywords);
+            });
+
+            let bestCategory = 'other';
+            let bestScore = 0;
+            let bestReasons = [];
+
+            CATEGORY_PRIORITY.forEach(category => {
+                const score = scores[category]?.score || 0;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestCategory = category;
+                    bestReasons = scores[category]?.matchedKeywords || [];
+                }
+            });
+
+            return bestScore > 0
+                ? { category: bestCategory, reasons: bestReasons.slice(0, 3) }
+                : { category: 'other', reasons: [] };
+        }
+
+        // ==================== TOOL ACTIONS ====================
+        function deleteTool(id) {
+            if (!confirm('Are you sure you want to delete this tool?')) return;
+            tools = tools.filter(t => t.id !== id);
+            saveData();
+            renderTools();
+            updateStats();
+            showToast('Tool deleted', 'info');
+        }
+
+        // ==================== CATEGORY MODAL ====================
+        function openCategoryModal() {
+            renderCategoryList();
+            document.getElementById('categoryModal').classList.remove('hidden');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.add('hidden');
+        }
+
+        function renderCategoryList() {
+            const list = document.getElementById('categoryList');
+            list.innerHTML = categories.map(cat => {
+                const toolCount = tools.filter(t => t.category === cat).length;
+                const isOther = cat === 'other';
+                return `
+                    <li class="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3 ${isOther ? '' : 'draggable'}"
+                        draggable="${isOther ? 'false' : 'true'}"
+                        data-category="${cat}"
+                        ondragstart="handleCategoryDragStart(event, '${cat}')"
+                        ondragend="handleCategoryDragEnd(event)"
+                        ondragover="handleCategoryDragOver(event, '${cat}')"
+                        ondrop="handleCategoryDrop(event, '${cat}')">
+                        <div class="flex items-center gap-3">
+                            ${!isOther ? '<i class="fas fa-grip-vertical drag-handle text-slate-600"></i>' : '<span class="w-4"></span>'}
+                            <span class="text-lg">${getCategoryIcon(cat)}</span>
+                            <span class="font-medium capitalize">${cat}</span>
+                            <span class="text-slate-500 text-sm">(${toolCount} tools)</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openRenameModal('${cat}')" class="text-slate-400 hover:text-indigo-400 transition-colors p-1" ${isOther ? 'disabled title="Cannot rename Other"' : ''}>
+                                <i class="fas fa-pen text-sm"></i>
+                            </button>
+                            <button onclick="deleteCategory('${cat}')" class="text-slate-400 hover:text-red-400 transition-colors p-1" ${isOther ? 'disabled title="Cannot delete Other"' : ''}>
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const name = input.value.trim().toLowerCase();
+            
+            if (!name) return;
+            if (categories.includes(name)) {
+                showToast('Category already exists!', 'warning');
+                return;
+            }
+
+            // Insert before 'other' if it exists, otherwise at end
+            const otherIndex = categories.indexOf('other');
+            if (otherIndex !== -1) {
+                categories.splice(otherIndex, 0, name);
+            } else {
+                categories.push(name);
+            }
+            
+            saveData();
+            renderCategoryList();
+            input.value = '';
+            showToast(`Category "${name}" added`, 'success');
+        }
+
+        function deleteCategory(name) {
+            if (name === 'other') {
+                showToast('Cannot delete the "Other" category', 'warning');
+                return;
+            }
+            
+            const toolCount = tools.filter(t => t.category === name).length;
+            if (!confirm(`Delete "${name}"? ${toolCount} tools will be moved to "Other".`)) return;
+
+            tools = tools.map(t => t.category === name ? { ...t, category: 'other' } : t);
+            categories = categories.filter(c => c !== name);
+            
+            if (!categories.includes('other')) {
+                categories.push('other');
+            }
+
+            saveData();
+            renderCategoryList();
+            renderTools();
+            updateStats();
+            showToast(`Category "${name}" deleted`, 'info');
+        }
+
+        // ==================== RENAME MODAL ====================
+        function openRenameModal(name) {
+            if (name === 'other') return;
+            document.getElementById('renameCategoryId').value = name;
+            document.getElementById('renameCategoryInput').value = name;
+            document.getElementById('renameModal').classList.remove('hidden');
+        }
+
+        function closeRenameModal() {
+            document.getElementById('renameModal').classList.add('hidden');
+        }
+
+        function saveRenamedCategory() {
+            const oldName = document.getElementById('renameCategoryId').value;
+            const newName = document.getElementById('renameCategoryInput').value.trim().toLowerCase();
+
+            if (!newName) return;
+            if (newName !== oldName && categories.includes(newName)) {
+                showToast('Category name already exists!', 'warning');
+                return;
+            }
+
+            const index = categories.indexOf(oldName);
+            if (index !== -1) {
+                categories[index] = newName;
+            }
+
+            tools = tools.map(t => t.category === oldName ? { ...t, category: newName } : t);
+
+            saveData();
+            renderCategoryList();
+            renderTools();
+            closeRenameModal();
+            showToast(`Category renamed to "${newName}"`, 'success');
+        }
+
+        // ==================== CLOSE MODALS ON OVERLAY CLICK ====================
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                    pendingImportData = null;
+                }
+            });
+        });
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeToolModal();
+                closeCategoryModal();
+                closeRenameModal();
+                closeImportModal();
+            }
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
